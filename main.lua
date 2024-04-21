@@ -1,9 +1,17 @@
+-- TODO
+-- "cell" or "square"?
+-- change square math to coords
+-- attack and collect
+-- images/textures
+
 crawl = require "crawl/crawl"
+
+-- constants
 
 BUTTONS_X = 1060
 BUTTONS_Y = 444
 
-walls = {
+WALLS = {
 	{index = 1, cells = {3, 4}},
 	{index = 1, cells = {2, 7}},
 	{index = 2, cells = {3, 8}},
@@ -21,17 +29,6 @@ walls = {
 	{index = 1, cells = {16, 21}},
 	{index = 1, cells = {18, 23}},
 	{index = 1, cells = {19, 24}}
-}
-
-contents = {
-	{cell = 16, contents = {{1, 0.5, 0.5}}},
-	{cell = 12, contents = {{2, 0.4, 0.02},{3, 0.6, 0.02}}}
-}
-
-heroStats = {
-	{name = "Alpha", hits = 20},
-	{name = "Beta", hits = 20},
-	{name = "Gamma", hits = 20}
 }
 
 BUTTONS = {
@@ -53,6 +50,21 @@ BUTTONS = {
 }
 
 BUTTON_SIZE = 64
+
+-- global variables
+
+contents = {
+	{cell = 16, contents = {{1, 0.5, 0.5}}},
+	{cell = 12, contents = {{2, 0.4, 0.02},{3, 0.6, 0.02}}}
+}
+
+heroStats = {
+	{name = "Alpha", hits = 17},
+	{name = "Beta", hits = 3},
+	{name = "Gamma", hits = 11}
+}
+
+inventory = {}
 
 -- callback functions for crawl library
 
@@ -95,7 +107,7 @@ end
 function wallBetween(x1, y1, x2, y2)
 	local c1 = x1 + (y1 - 1) * 5
 	local c2 = x2 + (y2 - 1) * 5
-	for i, w in ipairs(walls) do
+	for i, w in ipairs(WALLS) do
 		if (w.cells[1] == c1 and w.cells[2] == c2) or (w.cells[1] == c2 and w.cells[2] == c1) then
 			return w.index
 		end
@@ -124,7 +136,7 @@ end
 function useDoor(x, y, facing)
 	local c1 = x + (y - 1) * 5
 	local c2 = x + crawl.steps[facing][1] + (y + crawl.steps[facing][2] - 1) * 5
-	for i, w in ipairs(walls) do
+	for i, w in ipairs(WALLS) do
 		if (w.cells[1] == c1 and w.cells[2] == c2) or (w.cells[1] == c2 and w.cells[2] == c1) then
 			if w.index == 2 then 
 				w.index = 3
@@ -136,6 +148,21 @@ function useDoor(x, y, facing)
 		end
 	end
 	return false
+end
+
+function grabLoot(x, y)
+	local grabbed = false
+	local square = x + (y - 1) * 5
+	for i, c in ipairs(contents) do
+		if c.cell == square and #c.contents > 0 then
+			for i, loot in ipairs(c.contents) do
+				table.insert(inventory, loot[1])
+			end
+			c.contents = {}
+			grabbed = true
+		end
+	end
+	return grabbed
 end
 
 -- game startup
@@ -158,6 +185,11 @@ function love.load()
 	crawl.setSkyTexture("assets/sky.png")
 
 	frameTexture = love.graphics.newImage("assets/frame.png")
+	lootImages = {
+		love.graphics.newImage("assets/potion1.png"),
+		love.graphics.newImage("assets/potion2.png")
+	}
+
 	canvas = love.graphics.newCanvas(1024, 768)
 	redraw = true
 	playerX = 1
@@ -228,7 +260,9 @@ function executeControl(control)
 	if control == "exit" then
 		love.event.quit()
 	elseif control == "interact" then
-		if useDoor(playerX, playerY, playerFace) then
+		if grabLoot(playerX, playerY) then
+			redraw = true
+		elseif useDoor(playerX, playerY, playerFace) then
 			redraw = true
 		end
 	elseif control == "forward" then
@@ -262,16 +296,28 @@ end
 -- main drawing function
 
 function love.draw()
+	-- redraw the dungeon view canvas if needed
 	if redraw then
 		crawl.draw(canvas, playerX, playerY, playerFace)
 		redraw = false
 	end
+
+	-- draw the UI frame and the dungeon view canvas
 	love.graphics.draw(frameTexture)
 	love.graphics.draw(canvas, 16, 16)
+
+	-- draw hero stats
 	for i, hero in ipairs(heroStats) do
 		love.graphics.print(hero.name, 1152, 128 * i - 64)
 		love.graphics.print(string.format("Hits: %d", hero.hits), 1152, 128 * i - 48)
 	end
+
+	-- draw inventory
+	for i, loot in ipairs(inventory) do
+		love.graphics.draw(lootImages[i], BUTTONS[i].x + 6, BUTTONS[i].y + 4)
+	end
+
+	-- highlight UI elements based on user input
 	if hoveredButton > 0 then
 		local method = "line"
 		if downButton then

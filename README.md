@@ -1,4 +1,4 @@
-love2crawl is a LÖVE library that draws a first-person perspective view for a grid-based dungeon crawling game.
+crawl is a LÖVE library that draws a first-person perspective view for a grid-based dungeon crawling game.
 
 The library distorts and rescales 2D images to provide a simulated 3D view, in the style of classic dungeon crawling games such as Eye of the Beholder or Might and Magic. You do not need to provide images of walls at various distances and angles; instead, you give the library simple 2D images of your walls, monsters, and so forth, and the library does the rest.
 
