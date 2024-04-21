@@ -1,4 +1,4 @@
-crawl = require "crawl"
+crawl = require "crawl/crawl"
 
 BUTTONS_X = 1060
 BUTTONS_Y = 444
@@ -141,13 +141,23 @@ end
 -- game startup
 
 function love.load()
-	wallTextures = {"wall.png", "door.png", "opendoor.png"}
-	floorTextures = {"floor.png"}
-	contentsTextures = {"skeleton.png", "potion1.png", "potion2.png"}
+	wallTextures = {
+		"assets/wall.png", 
+		"assets/door.png", 
+		"assets/opendoor.png"
+	}
+	floorTextures = {
+		"assets/floor.png"
+	}
+	contentsTextures = {
+		"assets/skeleton.png", 
+		"assets/potion1.png", 
+		"assets/potion2.png"
+	}
 	crawl.init(wallTextures, floorTextures, floorTextures, contentsTextures, 600, 600, 3, 0.8, 0.0, surfaceIndexFunction, contentsIndexFunction)
-	crawl.setSkyTexture("sky.png")
+	crawl.setSkyTexture("assets/sky.png")
 
-	frameTexture = love.graphics.newImage("frame.png")
+	frameTexture = love.graphics.newImage("assets/frame.png")
 	canvas = love.graphics.newCanvas(1024, 768)
 	redraw = true
 	playerX = 1

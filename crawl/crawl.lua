@@ -1,9 +1,10 @@
 -- TO DO
 -- don't reduce setback below ?
 -- precalculations at depth 0 seem slow
--- are the faraway floor tiles stretched/squished/blurry?
 -- should dimming be a color instead? like we overlay the texture color with the dimming color * intensity?
 -- organization: separate private from public functions
+-- example dungeon shows sky beyond depth 3
+-- example should allow pickup/attack
 
 local crawl = {}
 
