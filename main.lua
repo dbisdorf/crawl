@@ -1,8 +1,9 @@
 -- TODO
 -- "cell" or "square"?
--- change square math to coords
--- attack and collect
--- images/textures
+-- change square number math to xy coords
+-- attack
+-- use item
+-- verbage: images/textures?
 
 crawl = require "crawl/crawl"
 
@@ -17,18 +18,21 @@ WALLS = {
 	{index = 2, cells = {3, 8}},
 	{index = 1, cells = {6, 7}},
 	{index = 1, cells = {8, 9}},
-	{index = 1, cells = {9, 10}},
+	{index = 2, cells = {9, 14}},
+	{index = 1, cells = {10, 15}},
 	{index = 1, cells = {11, 12}},
 	{index = 2, cells = {13, 14}},
 	{index = 1, cells = {14, 15}},
 	{index = 1, cells = {12, 17}},
 	{index = 1, cells = {13, 18}},
 	{index = 2, cells = {15, 20}},
+	{index = 2, cells = {16, 17}},
+	{index = 1, cells = {16, 21}},
 	{index = 1, cells = {17, 18}},
 	{index = 1, cells = {19, 20}},
-	{index = 1, cells = {16, 21}},
 	{index = 1, cells = {18, 23}},
-	{index = 1, cells = {19, 24}}
+	{index = 1, cells = {19, 24}},
+	{index = 2, cells = {23, 34}}
 }
 
 BUTTONS = {
@@ -65,6 +69,111 @@ heroStats = {
 }
 
 inventory = {}
+
+-- game startup
+
+function love.load()
+	wallTextures = {
+		"assets/wall.png", 
+		"assets/door.png", 
+		"assets/opendoor.png"
+	}
+	floorTextures = {
+		"assets/floor.png"
+	}
+	contentsTextures = {
+		"assets/skeleton.png", 
+		"assets/potion1.png", 
+		"assets/potion2.png"
+	}
+	crawl.init(wallTextures, floorTextures, floorTextures, contentsTextures, 
+		600, 600, 4, 0.8, 0.5, 
+		surfaceIndexFunction, contentsIndexFunction)
+	crawl.setSkyTexture("assets/sky.png")
+
+	frameTexture = love.graphics.newImage("assets/frame.png")
+	lootImages = {
+		love.graphics.newImage("assets/potion1.png"),
+		love.graphics.newImage("assets/potion2.png")
+	}
+
+	canvas = love.graphics.newCanvas(1024, 768)
+	redraw = true
+	playerX = 1
+	playerY = 1
+	playerFace = 2
+	hoveredButton = 0
+end
+
+-- input callback functions
+
+function love.keypressed(key, scancode, isrepeat)
+	downButton = true
+	hoveredButton = buttonForKey(key)
+end
+
+function love.keyreleased(key, scancode)
+	hoveredButton = 0
+	downButton = false
+	local button = buttonForKey(key)
+	if button > 0 then
+		executeControl(BUTTONS[button].control)
+	end
+end
+
+function love.mousemoved(x, y, dx, dy, istouch)
+	hoveredButton = buttonAtCoords(x, y)
+end
+
+function love.mousepressed(x, y, button, istouch, presses)
+	if button == 1 then
+		downButton = true
+	end
+end
+
+function love.mousereleased(x, y, button, istouch, presses)
+	downButton = false
+	if button == 1 and hoveredButton > 0 then
+		executeControl(BUTTONS[hoveredButton].control)
+	end
+end
+
+-- main drawing function
+
+function love.draw()
+	-- redraw the dungeon view canvas if needed
+	if redraw then
+		crawl.draw(canvas, playerX, playerY, playerFace)
+		redraw = false
+	end
+
+	-- draw the UI frame and the dungeon view canvas
+	love.graphics.draw(frameTexture)
+	love.graphics.draw(canvas, 16, 16)
+
+	-- draw hero stats
+	for i, hero in ipairs(heroStats) do
+		love.graphics.print(hero.name, 1152, 128 * i - 64)
+		love.graphics.print(string.format("Hits: %d", hero.hits), 1152, 128 * i - 48)
+	end
+
+	-- draw inventory
+	for i, loot in ipairs(inventory) do
+		love.graphics.draw(lootImages[i], BUTTONS[i].x + 6, BUTTONS[i].y + 4)
+	end
+
+	-- highlight UI elements based on user input
+	if hoveredButton > 0 then
+		local method = "line"
+		if downButton then
+			love.graphics.setColor(1.0, 1.0, 1.0, 0.5)
+			love.graphics.rectangle("fill", BUTTONS[hoveredButton].x, BUTTONS[hoveredButton].y, BUTTON_SIZE, BUTTON_SIZE)
+			love.graphics.setColor(1.0, 1.0, 1.0, 1.0)
+		else
+			love.graphics.rectangle("line", BUTTONS[hoveredButton].x, BUTTONS[hoveredButton].y, BUTTON_SIZE, BUTTON_SIZE)
+		end
+	end
+end
 
 -- callback functions for crawl library
 
@@ -158,78 +267,31 @@ function grabLoot(x, y)
 			for i, loot in ipairs(c.contents) do
 				table.insert(inventory, loot[1])
 			end
-			c.contents = {}
 			grabbed = true
+			c.contents = {}
 		end
 	end
 	return grabbed
 end
 
--- game startup
-
-function love.load()
-	wallTextures = {
-		"assets/wall.png", 
-		"assets/door.png", 
-		"assets/opendoor.png"
-	}
-	floorTextures = {
-		"assets/floor.png"
-	}
-	contentsTextures = {
-		"assets/skeleton.png", 
-		"assets/potion1.png", 
-		"assets/potion2.png"
-	}
-	crawl.init(wallTextures, floorTextures, floorTextures, contentsTextures, 600, 600, 3, 0.8, 0.0, surfaceIndexFunction, contentsIndexFunction)
-	crawl.setSkyTexture("assets/sky.png")
-
-	frameTexture = love.graphics.newImage("assets/frame.png")
-	lootImages = {
-		love.graphics.newImage("assets/potion1.png"),
-		love.graphics.newImage("assets/potion2.png")
-	}
-
-	canvas = love.graphics.newCanvas(1024, 768)
-	redraw = true
-	playerX = 1
-	playerY = 1
-	playerFace = 2
-	hoveredButton = 0
-end
-
--- love callback functions
-
-function love.keypressed(key, scancode, isrepeat)
-	downButton = true
-	hoveredButton = buttonForKey(key)
-end
-
-function love.keyreleased(key, scancode)
-	hoveredButton = 0
-	downButton = false
-	local button = buttonForKey(key)
-	if button > 0 then
-		executeControl(BUTTONS[button].control)
+function attackMonster(x, y)
+	local attacked = false
+	local square = x + (y - 1) * 5
+	for i, c in ipairs(contents) do
+		if c.cell == square and #c.contents > 0 then
+			for i, monster in ipairs(c.contents) do
+				if monster[1] == 1 then
+					attacked = true
+				end
+			end
+			if attacked then
+				c.contents = {}
+			end
+		end
 	end
+	return attacked
 end
 
-function love.mousemoved(x, y, dx, dy, istouch)
-	hoveredButton = buttonAtCoords(x, y)
-end
-
-function love.mousepressed(x, y, button, istouch, presses)
-	if button == 1 then
-		downButton = true
-	end
-end
-
-function love.mousereleased(x, y, button, istouch, presses)
-	downButton = false
-	if button == 1 and hoveredButton > 0 then
-		executeControl(BUTTONS[hoveredButton].control)
-	end
-end
 
 -- user control functions
 
@@ -265,6 +327,13 @@ function executeControl(control)
 		elseif useDoor(playerX, playerY, playerFace) then
 			redraw = true
 		end
+	elseif control == "attack" then
+		local wall = surfaceIndexFunction("wall", playerX, playerY, playerFace)
+		if wall == 0 or wall == 2 then
+			if attackMonster(playerX + crawl.steps[playerFace][1], playerY + crawl.steps[playerFace][2]) then
+				redraw = true
+			end
+		end
 	elseif control == "forward" then
 		newX = playerX + crawl.steps[playerFace][1]
 		newY = playerY + crawl.steps[playerFace][2]
@@ -292,42 +361,4 @@ function executeControl(control)
 		redraw = true
 	end
 end
-
--- main drawing function
-
-function love.draw()
-	-- redraw the dungeon view canvas if needed
-	if redraw then
-		crawl.draw(canvas, playerX, playerY, playerFace)
-		redraw = false
-	end
-
-	-- draw the UI frame and the dungeon view canvas
-	love.graphics.draw(frameTexture)
-	love.graphics.draw(canvas, 16, 16)
-
-	-- draw hero stats
-	for i, hero in ipairs(heroStats) do
-		love.graphics.print(hero.name, 1152, 128 * i - 64)
-		love.graphics.print(string.format("Hits: %d", hero.hits), 1152, 128 * i - 48)
-	end
-
-	-- draw inventory
-	for i, loot in ipairs(inventory) do
-		love.graphics.draw(lootImages[i], BUTTONS[i].x + 6, BUTTONS[i].y + 4)
-	end
-
-	-- highlight UI elements based on user input
-	if hoveredButton > 0 then
-		local method = "line"
-		if downButton then
-			love.graphics.setColor(1.0, 1.0, 1.0, 0.5)
-			love.graphics.rectangle("fill", BUTTONS[hoveredButton].x, BUTTONS[hoveredButton].y, BUTTON_SIZE, BUTTON_SIZE)
-			love.graphics.setColor(1.0, 1.0, 1.0, 1.0)
-		else
-			love.graphics.rectangle("line", BUTTONS[hoveredButton].x, BUTTONS[hoveredButton].y, BUTTON_SIZE, BUTTON_SIZE)
-		end
-	end
-end
-
 

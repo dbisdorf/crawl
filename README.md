@@ -101,7 +101,7 @@ For example, if the function returns {{3, 0.5, 0.5}}, this indicates that the du
 
 ## Constants
 
-The library uses these constant values internally, but they may be useful to use as well.
+The library uses these constant values internally, but they may be useful to your game as well.
 
 **crawl.steps**
 
