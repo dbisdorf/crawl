@@ -73,23 +73,6 @@ inventory = {}
 -- game startup
 
 function love.load()
-	wallTextures = {
-		"assets/wall.png", 
-		"assets/door.png", 
-		"assets/opendoor.png"
-	}
-	floorTextures = {
-		"assets/floor.png"
-	}
-	contentsTextures = {
-		"assets/skeleton.png", 
-		"assets/potion1.png", 
-		"assets/potion2.png"
-	}
-	crawl.init(wallTextures, floorTextures, floorTextures, contentsTextures, 
-		600, 600, 4, 0.8, 0.5, 
-		surfaceIndexFunction, contentsIndexFunction)
-	crawl.setSkyTexture("assets/sky.png")
 
 	frameTexture = love.graphics.newImage("assets/frame.png")
 	lootImages = {
@@ -103,6 +86,8 @@ function love.load()
 	playerY = 1
 	playerFace = 2
 	hoveredButton = 0
+	crawlSetup = false
+	waitMessage = false
 end
 
 -- input callback functions
@@ -113,12 +98,13 @@ function love.keypressed(key, scancode, isrepeat)
 end
 
 function love.keyreleased(key, scancode)
-	hoveredButton = 0
 	downButton = false
 	local button = buttonForKey(key)
 	if button > 0 then
+		hoveredButton = button
 		executeControl(BUTTONS[button].control)
 	end
+	hoveredButton = 0
 end
 
 function love.mousemoved(x, y, dx, dy, istouch)
@@ -138,9 +124,25 @@ function love.mousereleased(x, y, button, istouch, presses)
 	end
 end
 
+-- main game data update function
+
+function love.update(dt)
+	if waitMessage and not crawlSetup then
+		setupCrawl()
+		crawlSetup = true
+	end
+end
+
 -- main drawing function
 
 function love.draw()
+	-- if the library isn't set up, show a waiting message
+	if not crawlSetup then
+		waitMessage = true
+		love.graphics.printf("Please wait...", 0, 400, 1280, "center")
+		return
+	end
+
 	-- redraw the dungeon view canvas if needed
 	if redraw then
 		crawl.draw(canvas, playerX, playerY, playerFace)
@@ -159,7 +161,9 @@ function love.draw()
 
 	-- draw inventory
 	for i, loot in ipairs(inventory) do
-		love.graphics.draw(lootImages[i], BUTTONS[i].x + 6, BUTTONS[i].y + 4)
+		if loot > 0 then
+			love.graphics.draw(lootImages[loot - 1], BUTTONS[i].x + 6, BUTTONS[i].y + 4)
+		end
 	end
 
 	-- highlight UI elements based on user input
@@ -212,6 +216,26 @@ function contentsIndexFunction(x, y)
 end
 
 -- maze logic
+
+function setupCrawl()
+	wallTextures = {
+		"assets/wall.png", 
+		"assets/door.png", 
+		"assets/opendoor.png"
+	}
+	floorTextures = {
+		"assets/floor.png"
+	}
+	contentsTextures = {
+		"assets/skeleton.png", 
+		"assets/potion1.png", 
+		"assets/potion2.png"
+	}
+	crawl.init(wallTextures, floorTextures, floorTextures, contentsTextures, 
+		600, 600, 4, 0.8, 0.5, 
+		surfaceIndexFunction, contentsIndexFunction)
+	crawl.setSkyTexture("assets/sky.png")
+end
 
 function wallBetween(x1, y1, x2, y2)
 	local c1 = x1 + (y1 - 1) * 5
@@ -321,6 +345,8 @@ function executeControl(control)
 	local newY = playerY
 	if control == "exit" then
 		love.event.quit()
+	elseif control == "inv" then
+		inventory[hoveredButton] = 0
 	elseif control == "interact" then
 		if grabLoot(playerX, playerY) then
 			redraw = true

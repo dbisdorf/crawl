@@ -42,7 +42,9 @@ The library refers to north as direction number 1, east as 2, south as 3, and we
 
 **crawl.init(wallTextures, ceilingTextures, floorTextures, contentsTextures, wallWidth, maxDepth, setBack, dimming, surfaceIndexFunction, contentsIndexFunction)**
 
-Call this once (possibly during love.load()) to initialize the library.
+Call this to give the library the data it needs to draw your dungeon. The function might take a little time to complete, so you may wish to display a "please wait" message before calling it.
+
+You must call this function before you call crawl.draw(). If your entire dungeon uses the same set of images and drawing parameters, you might only need to call this function once. However, if your dungeon contains areas with visually different environments (for example, if you have outdoor areas and indoor areas) you could call this function whenever you move between areas to change which images the library uses. The benefit of this approach is that you conserve memory by giving the library only the images it needs to draw the current area, rather than feeding it images it won't use in the current area. The cost of this approach is the delay you cause every time you call crawl.init().
 
 - **wallTextures**: an array of the filenames of the images you'll use as walls.
 - **ceilingTxtures**: an array of the filenames of the images you'll use as ceilings.
