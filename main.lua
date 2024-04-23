@@ -1,9 +1,7 @@
 -- TODO
--- "cell" or "square"?
--- change square number math to xy coords
--- attack
 -- use item
--- verbage: images/textures?
+-- outdoor area with sky
+-- more constants
 
 crawl = require "crawl/crawl"
 
@@ -13,26 +11,26 @@ BUTTONS_X = 1060
 BUTTONS_Y = 444
 
 WALLS = {
-	{index = 1, cells = {3, 4}},
-	{index = 1, cells = {2, 7}},
-	{index = 2, cells = {3, 8}},
-	{index = 1, cells = {6, 7}},
-	{index = 1, cells = {8, 9}},
-	{index = 2, cells = {9, 14}},
-	{index = 1, cells = {10, 15}},
-	{index = 1, cells = {11, 12}},
-	{index = 2, cells = {13, 14}},
-	{index = 1, cells = {14, 15}},
-	{index = 1, cells = {12, 17}},
-	{index = 1, cells = {13, 18}},
-	{index = 2, cells = {15, 20}},
-	{index = 2, cells = {16, 17}},
-	{index = 1, cells = {16, 21}},
-	{index = 1, cells = {17, 18}},
-	{index = 1, cells = {19, 20}},
-	{index = 1, cells = {18, 23}},
-	{index = 1, cells = {19, 24}},
-	{index = 2, cells = {23, 34}}
+	{index = 1, squares = {{3,1}, {4,1}}},
+	{index = 1, squares = {{2,1}, {2,2}}},
+	{index = 2, squares = {{3,1}, {3,2}}},
+	{index = 1, squares = {{1,2}, {2,2}}},
+	{index = 1, squares = {{3,2}, {4,2}}},
+	{index = 2, squares = {{4,2}, {4,3}}},
+	{index = 1, squares = {{5,2}, {5,3}}},
+	{index = 1, squares = {{1,3}, {2,3}}},
+	{index = 2, squares = {{3,3}, {4,3}}},
+	{index = 1, squares = {{4,3}, {5,3}}},
+	{index = 1, squares = {{2,3}, {2,4}}},
+	{index = 1, squares = {{3,3}, {3,4}}},
+	{index = 2, squares = {{5,3}, {5,4}}},
+	{index = 2, squares = {{1,4}, {2,4}}},
+	{index = 1, squares = {{1,4}, {1,5}}},
+	{index = 1, squares = {{2,4}, {3,4}}},
+	{index = 1, squares = {{4,4}, {5,4}}},
+	{index = 1, squares = {{3,4}, {3,5}}},
+	{index = 1, squares = {{4,4}, {4,5}}},
+	{index = 2, squares = {{3,5}, {4,5}}}
 }
 
 BUTTONS = {
@@ -58,8 +56,8 @@ BUTTON_SIZE = 64
 -- global variables
 
 contents = {
-	{cell = 16, contents = {{1, 0.5, 0.5}}},
-	{cell = 12, contents = {{2, 0.4, 0.02},{3, 0.6, 0.02}}}
+	{square = {1,4}, contents = {{1, 0.5, 0.5}}},
+	{square = {2,3}, contents = {{2, 0.4, 0.02},{3, 0.6, 0.02}}}
 }
 
 heroStats = {
@@ -74,7 +72,7 @@ inventory = {}
 
 function love.load()
 
-	frameTexture = love.graphics.newImage("assets/frame.png")
+	frameImage = love.graphics.newImage("assets/frame.png")
 	lootImages = {
 		love.graphics.newImage("assets/potion1.png"),
 		love.graphics.newImage("assets/potion2.png")
@@ -150,7 +148,7 @@ function love.draw()
 	end
 
 	-- draw the UI frame and the dungeon view canvas
-	love.graphics.draw(frameTexture)
+	love.graphics.draw(frameImage)
 	love.graphics.draw(canvas, 16, 16)
 
 	-- draw hero stats
@@ -208,7 +206,7 @@ end
 
 function contentsIndexFunction(x, y)
 	for i, c in ipairs(contents) do
-		if x + (y - 1) * 5 == c.cell then
+		if x == c.square[1] and y == c.square[2] then
 			return c.contents
 		end
 	end
@@ -218,30 +216,29 @@ end
 -- maze logic
 
 function setupCrawl()
-	wallTextures = {
+	wallImages = {
 		"assets/wall.png", 
 		"assets/door.png", 
 		"assets/opendoor.png"
 	}
-	floorTextures = {
+	floorImages = {
 		"assets/floor.png"
 	}
-	contentsTextures = {
+	contentsImages = {
 		"assets/skeleton.png", 
 		"assets/potion1.png", 
 		"assets/potion2.png"
 	}
-	crawl.init(wallTextures, floorTextures, floorTextures, contentsTextures, 
+	crawl.init(wallImages, floorImages, floorImages, contentsImages, 
 		600, 600, 4, 0.8, 0.5, 
 		surfaceIndexFunction, contentsIndexFunction)
-	crawl.setSkyTexture("assets/sky.png")
+	crawl.setSkyImage("assets/sky.png")
 end
 
 function wallBetween(x1, y1, x2, y2)
-	local c1 = x1 + (y1 - 1) * 5
-	local c2 = x2 + (y2 - 1) * 5
 	for i, w in ipairs(WALLS) do
-		if (w.cells[1] == c1 and w.cells[2] == c2) or (w.cells[1] == c2 and w.cells[2] == c1) then
+		if (w.squares[1][1] == x1 and w.squares[1][2] == y1 and w.squares[2][1] == x2 and w.squares[2][2] == y2) or 
+			(w.squares[1][1] == x2 and w.squares[1][2] == y2 and w.squares[2][1] == x1 and w.squares[2][2] == y1) then
 			return w.index
 		end
 	end
@@ -267,10 +264,11 @@ function validMove(x1, y1, x2, y2)
 end
 
 function useDoor(x, y, facing)
-	local c1 = x + (y - 1) * 5
-	local c2 = x + crawl.steps[facing][1] + (y + crawl.steps[facing][2] - 1) * 5
+	local x2 = x + crawl.steps[facing][1]
+	local y2 = y + crawl.steps[facing][2]
 	for i, w in ipairs(WALLS) do
-		if (w.cells[1] == c1 and w.cells[2] == c2) or (w.cells[1] == c2 and w.cells[2] == c1) then
+		if (w.squares[1][1] == x and w.squares[1][2] == y and w.squares[2][1] == x2 and w.squares[2][2] == y2) or 
+			(w.squares[1][1] == x2 and w.squares[1][2] == y2 and w.squares[2][1] == x and w.squares[2][2] == y) then
 			if w.index == 2 then 
 				w.index = 3
 				return true
@@ -285,9 +283,8 @@ end
 
 function grabLoot(x, y)
 	local grabbed = false
-	local square = x + (y - 1) * 5
 	for i, c in ipairs(contents) do
-		if c.cell == square and #c.contents > 0 then
+		if c.square[1] == x and c.square[2] == y and #c.contents > 0 then
 			for i, loot in ipairs(c.contents) do
 				table.insert(inventory, loot[1])
 			end
@@ -300,9 +297,8 @@ end
 
 function attackMonster(x, y)
 	local attacked = false
-	local square = x + (y - 1) * 5
 	for i, c in ipairs(contents) do
-		if c.cell == square and #c.contents > 0 then
+		if c.square[1] == x and c.square[2] == y and #c.contents > 0 then
 			for i, monster in ipairs(c.contents) do
 				if monster[1] == 1 then
 					attacked = true

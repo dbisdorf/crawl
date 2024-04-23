@@ -1,10 +1,8 @@
 -- TO DO
--- don't reduce setback below ?
 -- precalculations at depth 0 seem slow
 -- should dimming be a color instead? like we overlay the texture color with the dimming color * intensity?
 -- organization: separate private from public functions
--- example dungeon shows sky beyond depth 3
--- example should allow pickup/attack
+-- verbage: images/textures?
 
 local crawl = {}
 
@@ -22,24 +20,24 @@ function crawl.rightFaceFrom(face)
 	return face % 4 + 1
 end
 
-function crawl.init(wallTextures, ceilingTextures, floorTextures, contentsTextures, wallWidth, wallHeight, maxDepth, setBack, dimming, surfaceIndexFunction, contentsIndexFunction)
+function crawl.init(wallImages, ceilingImages, floorImages, contentsImages, wallWidth, wallHeight, maxDepth, setBack, dimming, surfaceIndexFunction, contentsIndexFunction)
 	local tempWalls = {}
-	for i, t in ipairs(wallTextures) do
+	for i, t in ipairs(wallImages) do
 		tempWalls[i] = love.image.newImageData(t)
 	end
 	local tempCeilings = {}
-	for i, t in ipairs(ceilingTextures) do
+	for i, t in ipairs(ceilingImages) do
 		tempCeilings[i] = love.image.newImageData(t)
 	end
 	local tempFloors = {}
-	for i, t in ipairs(floorTextures) do
+	for i, t in ipairs(floorImages) do
 		tempFloors[i] = love.image.newImageData(t)
 	end
-	crawl.contentsTextures = {}
-	for i, t in ipairs(contentsTextures) do
-		crawl.contentsTextures[i] = love.graphics.newImage(t)
+	crawl.contentsImages = {}
+	for i, t in ipairs(contentsImages) do
+		crawl.contentsImages[i] = love.graphics.newImage(t)
 	end
-	crawl.skyTexture = nil
+	crawl.skyImage = nil
 
 	crawl.surfaceIndexFunction = surfaceIndexFunction
 	crawl.contentsIndexFunction = contentsIndexFunction
@@ -73,11 +71,11 @@ function crawl.init(wallTextures, ceilingTextures, floorTextures, contentsTextur
 				newWallData.back = {
 					x = backWidth * -0.5,
 					y = backHeight * -0.5,
-					textures = {}
+					images = {}
 				}
 				for i, t in ipairs(tempWalls) do
 					-- print(t:getDimensions())
-					newWallData.back.textures[i] = crawl.scaleWallTexture(t, backWidth, leftHeight, rightHeight)
+					newWallData.back.images[i] = crawl.scaleWallImage(t, backWidth, leftHeight, rightHeight)
 				end
 
 				-- center ceilings and floors
@@ -85,18 +83,18 @@ function crawl.init(wallTextures, ceilingTextures, floorTextures, contentsTextur
 				newWallData.up = {
 					x = foreWidth * -0.5,
 					y = foreHeight * -0.5,
-					textures = {}
+					images = {}
 				}
 				for i, t in ipairs(tempCeilings) do
-					newWallData.up.textures[i] = crawl.scaleHorizTexture(t, horizHeight, foreWidth, backWidth, (foreWidth - backWidth) / 2)
+					newWallData.up.images[i] = crawl.scaleHorizImage(t, horizHeight, foreWidth, backWidth, (foreWidth - backWidth) / 2)
 				end
 				newWallData.down = {
 					x = foreWidth * -0.5,
 					y = foreHeight * 0.5 - horizHeight,
-					textures = {}
+					images = {}
 				}
 				for i, t in ipairs(tempFloors) do
-					newWallData.down.textures[i] = crawl.scaleHorizTexture(t, horizHeight, backWidth, foreWidth, (backWidth - foreWidth) / 2)
+					newWallData.down.images[i] = crawl.scaleHorizImage(t, horizHeight, backWidth, foreWidth, (backWidth - foreWidth) / 2)
 				end
 
 			elseif breadth == 1 or depth > 0 then
@@ -108,11 +106,11 @@ function crawl.init(wallTextures, ceilingTextures, floorTextures, contentsTextur
 				newWallData.side = {
 					x = crawl.round(backWidth * -0.5 + backWidth * breadth),
 					y = crawl.round(foreHeight * -0.5),
-					textures = {}
+					images = {}
 				}
 				-- print(string.format("depth %d breadth %d backWidth %d foreWidth %d x %d wallwidth %d", depth, breadth, backWidth, foreWidth, newWallData.side.x, wallWidth))
 				for i, t in ipairs(tempWalls) do
-					newWallData.side.textures[i] = crawl.scaleWallTexture(t, wallWidth, leftHeight, rightHeight)
+					newWallData.side.images[i] = crawl.scaleWallImage(t, wallWidth, leftHeight, rightHeight)
 				end
 
 				-- side ceilings and floors
@@ -121,20 +119,20 @@ function crawl.init(wallTextures, ceilingTextures, floorTextures, contentsTextur
 				newWallData.up = {
 					x = backCorner,
 					y = foreHeight * -0.5,
-					textures = {}
+					images = {}
 				}
 				for i, t in ipairs(tempCeilings) do
-					newWallData.up.textures[i] = crawl.scaleHorizTexture(t, floorHeight, foreWidth, backWidth, backCorner - foreCorner)
-					-- print(string.format("depth %d breadth %d textures %d", depth, breadth, #newWallData.up.textures))
-					-- print(newWallData.up.textures[i])
+					newWallData.up.images[i] = crawl.scaleHorizImage(t, floorHeight, foreWidth, backWidth, backCorner - foreCorner)
+					-- print(string.format("depth %d breadth %d images %d", depth, breadth, #newWallData.up.images))
+					-- print(newWallData.up.images[i])
 				end
 				newWallData.down = {
 					x = backCorner,
 					y = foreHeight * 0.5 - floorHeight,
-					textures = {}
+					images = {}
 				}
 				for i, t in ipairs(tempFloors) do
-					newWallData.down.textures[i] = crawl.scaleHorizTexture(t, floorHeight, backWidth, foreWidth, foreCorner - backCorner)
+					newWallData.down.images[i] = crawl.scaleHorizImage(t, floorHeight, backWidth, foreWidth, foreCorner - backCorner)
 				end
 			end
 
@@ -144,16 +142,16 @@ function crawl.init(wallTextures, ceilingTextures, floorTextures, contentsTextur
 
 end
 
-function crawl.setSkyTexture(texture)
-	if texture == nil then
-		crawl.skyTexture = nil
+function crawl.setSkyImage(image)
+	if image == nil then
+		crawl.skyImage = nil
 	else
-		crawl.skyTexture = love.graphics.newImage(texture)
-		local skyW, skyH = crawl.skyTexture:getDimensions()
+		crawl.skyImage = love.graphics.newImage(image)
+		local skyW, skyH = crawl.skyImage:getDimensions()
 		local skyFaceW = crawl.round(skyW / 4)
 		crawl.skyQuads = {}
 		for i = 1, 4 do
-			crawl.skyQuads[i] = love.graphics.newQuad((i - 1) * skyFaceW, 0, skyFaceW, skyH, crawl.skyTexture)
+			crawl.skyQuads[i] = love.graphics.newQuad((i - 1) * skyFaceW, 0, skyFaceW, skyH, crawl.skyImage)
 		end
 	end
 end
@@ -180,10 +178,10 @@ function crawl.draw(canvas, x, y, facing)
 	love.graphics.translate(cw / 2, ch / 2)
 
 	-- draw sky
-	if crawl.skyTexture ~= nil then
+	if crawl.skyImage ~= nil then
 		local skyX, skyY, skyW, skyH = crawl.skyQuads[facing]:getViewport()
 		local skyScale = ch / skyH
-		love.graphics.draw(crawl.skyTexture, crawl.skyQuads[facing], 0, 0, 0, skyScale, skyScale, crawl.round(skyW / 2), crawl.round(skyH / 2))
+		love.graphics.draw(crawl.skyImage, crawl.skyQuads[facing], 0, 0, 0, skyScale, skyScale, crawl.round(skyW / 2), crawl.round(skyH / 2))
 	end
 	
 	for depth = crawl.maxDepth, 0, -1 do
@@ -201,8 +199,8 @@ function crawl.draw(canvas, x, y, facing)
 			if wall > 0 then
 				-- i only have back face wall data for the straight-ahead cells
 				wallData = crawl.wallData[depth][0].back
-				local ww, wh = wallData.textures[wall]:getDimensions()
-				love.graphics.draw(wallData.textures[wall], wallData.x + ww * breadth, wallData.y)
+				local ww, wh = wallData.images[wall]:getDimensions()
+				love.graphics.draw(wallData.images[wall], wallData.x + ww * breadth, wallData.y)
 			end
 		end
 
@@ -218,23 +216,23 @@ function crawl.draw(canvas, x, y, facing)
 			wall = crawl.surfaceIndexFunction("ceiling", wx, wy, 0)
 			if wall > 0 then
 				wallData = crawl.wallData[depth][math.abs(breadth)].up
-				-- print(string.format("%d %d %d", depth, breadth, #wallData.textures))
-				love.graphics.draw(wallData.textures[wall], wallData.x * flip, wallData.y, 0, flip, 1)
+				-- print(string.format("%d %d %d", depth, breadth, #wallData.images))
+				love.graphics.draw(wallData.images[wall], wallData.x * flip, wallData.y, 0, flip, 1)
 			end
 			wall = crawl.surfaceIndexFunction("floor", wx, wy, 0)
 			if wall > 0 then
 				wallData = crawl.wallData[depth][math.abs(breadth)].down
-				love.graphics.draw(wallData.textures[wall], wallData.x * flip, wallData.y, 0, flip, 1)
+				love.graphics.draw(wallData.images[wall], wallData.x * flip, wallData.y, 0, flip, 1)
 			end
 		end
 
 		-- draw contents
 		wallData = crawl.wallData[depth][0].down
 		local backY = wallData.y
-		local floorWidth, foreHeight = wallData.textures[1]:getDimensions()
+		local floorWidth, foreHeight = wallData.images[1]:getDimensions()
 		local foreY = backY + foreHeight - 1
 		local backWallData = crawl.wallData[depth][0].back
-		local backWidth, backHeight = backWallData.textures[1]:getDimensions()
+		local backWidth, backHeight = backWallData.images[1]:getDimensions()
 		for breadth = -drawBreadth, drawBreadth do
 			wx = x + crawl.steps[facing][1] * depth + crawl.steps[faceRight][1] * breadth
 			wy = y + crawl.steps[facing][2] * depth + crawl.steps[faceRight][2] * breadth
@@ -244,10 +242,10 @@ function crawl.draw(canvas, x, y, facing)
 					local cy = crawl.round((foreY - backY) * c[3] + backY)
 					local cw = crawl.round((floorWidth - backWidth) * c[3] + backWidth)
 					local cx = (cw * -0.5) + (cw * breadth) + (cw * c[2])
-					local ctw, cth = crawl.contentsTextures[c[1]]:getDimensions()
+					local ctw, cth = crawl.contentsImages[c[1]]:getDimensions()
 					local cScale = crawl.setBack / (crawl.setBack + depth - 1 + (1.0 - c[3]))
 					-- print(string.format("cx %d cy %d scale %f w %d h %d", cx, cy, wallData.scale, crawl.round(ctw/2), cth))
-					love.graphics.draw(crawl.contentsTextures[c[1]], cx, cy, 0, cScale, cScale, crawl.round(ctw / 2), cth)
+					love.graphics.draw(crawl.contentsImages[c[1]], cx, cy, 0, cScale, cScale, crawl.round(ctw / 2), cth)
 				end
 			end
 		end
@@ -266,7 +264,7 @@ function crawl.draw(canvas, x, y, facing)
 					wallData = crawl.wallData[depth][-breadth].side
 					-- print(depth .. " " .. breadth .. " " .. crawl.wallData[3][1].side.x)
 					-- print("left side wall " .. wallData.x .. " " .. wallData.y)
-					love.graphics.draw(wallData.textures[wall], -wallData.x, wallData.y, 0, -1, 1)
+					love.graphics.draw(wallData.images[wall], -wallData.x, wallData.y, 0, -1, 1)
 				end
 			elseif breadth > 0 then
 				-- right side
@@ -277,7 +275,7 @@ function crawl.draw(canvas, x, y, facing)
 				if wall > 0 then
 					-- print("draw right")
 					wallData = crawl.wallData[depth][breadth].side
-					love.graphics.draw(wallData.textures[wall], wallData.x, wallData.y)
+					love.graphics.draw(wallData.images[wall], wallData.x, wallData.y)
 				end
 			end
 
@@ -291,8 +289,8 @@ function crawl.draw(canvas, x, y, facing)
 	love.graphics.setDefaultFilter(filterMin, filterMag, filterAni)
 end
 
-function crawl.scaleWallTexture(texture, width, leftHeight, rightHeight)
-	local tw, th = texture:getDimensions()
+function crawl.scaleWallImage(image, width, leftHeight, rightHeight)
+	local tw, th = image:getDimensions()
 	local height = math.max(leftHeight, rightHeight)
 	local scaleImage = love.image.newImageData(width, height)
 	local x2
@@ -323,7 +321,7 @@ function crawl.scaleWallTexture(texture, width, leftHeight, rightHeight)
 		for y1 = scaledTop, scaledBottom do
 			y2 = math.floor((th / scaledHeight) * (y1 - scaledTop))
 			-- print(string.format("%d %d %d %d %d %d", x1, y1, x2, y2, width, height))
-			r, g, b, a = texture:getPixel(x2, y2)
+			r, g, b, a = image:getPixel(x2, y2)
 			scaleImage:setPixel(x1, y1, r * dim, g * dim, b * dim, a)
 		end
 	end
@@ -331,8 +329,8 @@ function crawl.scaleWallTexture(texture, width, leftHeight, rightHeight)
 	return love.graphics.newImage(scaleImage)
 end
 
-function crawl.scaleHorizTexture(texture, height, topWidth, bottomWidth, slant)
-	local tw, th = texture:getDimensions()
+function crawl.scaleHorizImage(image, height, topWidth, bottomWidth, slant)
+	local tw, th = image:getDimensions()
 	local topLeft = 0
 	local topRight = topWidth - 1
 	local bottomLeft = slant
@@ -373,7 +371,7 @@ function crawl.scaleHorizTexture(texture, height, topWidth, bottomWidth, slant)
 		for x1 = scaledLeft, scaledRight do
 			x2 = math.floor((tw / scaledWidth) * (x1 - scaledLeft))
 			-- print(string.format("topleft %d topright %d bottomleft %d bottomright %d width %d height %d x1 %d y1 %d x2 %d y2 %d", topLeft, topRight, bottomLeft, bottomRight, width, height, x1, y1, x2, y2))
-			r, g, b, a = texture:getPixel(x2, y2)
+			r, g, b, a = image:getPixel(x2, y2)
 			scaleImage:setPixel(x1, y1, r * dim, g * dim, b * dim, a)
 		end
 	end
