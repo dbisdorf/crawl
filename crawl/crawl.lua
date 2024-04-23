@@ -1,16 +1,109 @@
 -- TO DO
 -- precalculations at depth 0 seem slow
--- should dimming be a color instead? like we overlay the texture color with the dimming color * intensity?
--- organization: separate private from public functions
--- verbage: images/textures?
+-- organization: separate private from public functions (are private functions private now?)
+-- remove comments/debugging
 
 local crawl = {}
 
 crawl.steps = {{0,-1},{1,0},{0,1},{-1,0}}
 
-function crawl.round(float)
+-- internal scaling functions
+--
+local function round(float)
 	return math.floor(float + 0.5)
 end
+
+local function scaleWallImage(image, width, leftHeight, rightHeight)
+	local tw, th = image:getDimensions()
+	local height = math.max(leftHeight, rightHeight)
+	local scaleImage = love.image.newImageData(width, height)
+	local x2
+	local y2
+	local scaledHeight
+	local scaledTop
+	local scaledBottom
+	local r
+	local g
+	local b
+	local a
+	local dim
+
+	for x1 = 0, width - 1 do
+		if leftHeight ~= rightHeight then
+			--x2 = round(math.sqrt(1 - ((width - x1) / width) * ((width - x1) / width)) * tw)
+			x2 = math.floor(math.log(x1 / width * 3.0 + 1.0, 4) * tw)
+		else
+			x2 = math.floor(tw / width * x1)
+		end
+		scaledHeight = round((rightHeight - leftHeight) / width * x1 + leftHeight)
+		-- print(string.format("leftHeight %d rightHeight %d width %d x1 %d x2 %d", leftHeight, rightHeight, width, x1, x2))
+		scaledTop = (height - scaledHeight) / 2
+		scaledBottom = scaledTop + scaledHeight - 1
+		-- print(string.format("height %d scaledHeight %d scaledTop %d scaledBottom %d", height, scaledHeight, scaledTop, scaledBottom))
+		dim = ((scaledBottom - scaledTop) / crawl.wallHeight) * crawl.dimming + (1.0 - crawl.dimming)
+
+		for y1 = scaledTop, scaledBottom do
+			y2 = math.floor((th / scaledHeight) * (y1 - scaledTop))
+			-- print(string.format("%d %d %d %d %d %d", x1, y1, x2, y2, width, height))
+			r, g, b, a = image:getPixel(x2, y2)
+			scaleImage:setPixel(x1, y1, r * dim, g * dim, b * dim, a)
+		end
+	end
+
+	return love.graphics.newImage(scaleImage)
+end
+
+local function scaleHorizImage(image, height, topWidth, bottomWidth, slant)
+	local tw, th = image:getDimensions()
+	local topLeft = 0
+	local topRight = topWidth - 1
+	local bottomLeft = slant
+	local bottomRight = bottomWidth + slant - 1
+	local width = math.max(topRight, bottomRight) - math.min(topLeft, bottomLeft) + 1
+	-- print(string.format("scale to w %d h %d", width, height))
+	local scaleImage = love.image.newImageData(width, height)
+	local scaledWidth
+	local scaledLeft
+	local scaledRight
+	local x2
+	local y2
+	local r
+	local g
+	local b
+	local a
+	local dim
+
+	for y1 = 0, height - 1 do
+		if topWidth < bottomWidth then
+			y2 = math.floor(math.log(y1 / height * 3.0 + 1.0, 4) * th)
+		else
+			y2 = math.floor(math.log((height - 1 - y1) / height * 3.0 + 1.0, 4) * th)
+		end
+		scaledWidth = round((bottomWidth - topWidth) / height * y1 + topWidth)
+		-- scaledLeft = round((bottomLeft - topLeft) / height * y1 + topLeft)
+		-- so the question of scaledLeft is different in this method
+		-- it either starts at 0 and shifts right as we go (if bottomLeft >= 0)
+		-- or starts indented and shifts left until it reaches zero (if bottomLeft < 0)
+		if bottomLeft >= 0 then
+			scaledLeft = round(slant / height * y1)
+		else
+			scaledLeft = round(-bottomLeft + slant / height * y1)
+		end
+		scaledRight = scaledLeft + scaledWidth - 1
+		dim = ((scaledRight - scaledLeft) / crawl.wallWidth * crawl.dimming) + (1.0 - crawl.dimming)
+
+		for x1 = scaledLeft, scaledRight do
+			x2 = math.floor((tw / scaledWidth) * (x1 - scaledLeft))
+			-- print(string.format("topleft %d topright %d bottomleft %d bottomright %d width %d height %d x1 %d y1 %d x2 %d y2 %d", topLeft, topRight, bottomLeft, bottomRight, width, height, x1, y1, x2, y2))
+			r, g, b, a = image:getPixel(x2, y2)
+			scaleImage:setPixel(x1, y1, r * dim, g * dim, b * dim, a)
+		end
+	end
+
+	return love.graphics.newImage(scaleImage)
+end
+
+-- utility functions
 
 function crawl.leftFaceFrom(face)
 	return (face - 2) % 4 + 1
@@ -19,6 +112,8 @@ end
 function crawl.rightFaceFrom(face)
 	return face % 4 + 1
 end
+
+-- main user functions
 
 function crawl.init(wallImages, ceilingImages, floorImages, contentsImages, wallWidth, wallHeight, maxDepth, setBack, dimming, surfaceIndexFunction, contentsIndexFunction)
 	local tempWalls = {}
@@ -57,11 +152,11 @@ function crawl.init(wallImages, ceilingImages, floorImages, contentsImages, wall
 			else
 				forwardScale = setBack / (setBack + depth - 1)
 			end
-			local foreWidth = crawl.round(wallWidth * forwardScale)
-			local foreHeight = crawl.round(wallHeight * forwardScale)
+			local foreWidth = round(wallWidth * forwardScale)
+			local foreHeight = round(wallHeight * forwardScale)
 			local backScale = setBack / (setBack + depth)
-			local backWidth = crawl.round(wallWidth * backScale)
-			local backHeight = crawl.round(wallHeight * backScale)
+			local backWidth = round(wallWidth * backScale)
+			local backHeight = round(wallHeight * backScale)
 			-- print(string.format("depth %d forwardScale %f backScale %f backHeight %d", depth, forwardScale, backScale, backHeight))
 
 			if breadth == 0 then
@@ -75,18 +170,18 @@ function crawl.init(wallImages, ceilingImages, floorImages, contentsImages, wall
 				}
 				for i, t in ipairs(tempWalls) do
 					-- print(t:getDimensions())
-					newWallData.back.images[i] = crawl.scaleWallImage(t, backWidth, leftHeight, rightHeight)
+					newWallData.back.images[i] = scaleWallImage(t, backWidth, leftHeight, rightHeight)
 				end
 
 				-- center ceilings and floors
-				local horizHeight = crawl.round((foreHeight - backHeight) / 2)
+				local horizHeight = round((foreHeight - backHeight) / 2)
 				newWallData.up = {
 					x = foreWidth * -0.5,
 					y = foreHeight * -0.5,
 					images = {}
 				}
 				for i, t in ipairs(tempCeilings) do
-					newWallData.up.images[i] = crawl.scaleHorizImage(t, horizHeight, foreWidth, backWidth, (foreWidth - backWidth) / 2)
+					newWallData.up.images[i] = scaleHorizImage(t, horizHeight, foreWidth, backWidth, (foreWidth - backWidth) / 2)
 				end
 				newWallData.down = {
 					x = foreWidth * -0.5,
@@ -94,35 +189,35 @@ function crawl.init(wallImages, ceilingImages, floorImages, contentsImages, wall
 					images = {}
 				}
 				for i, t in ipairs(tempFloors) do
-					newWallData.down.images[i] = crawl.scaleHorizImage(t, horizHeight, backWidth, foreWidth, (backWidth - foreWidth) / 2)
+					newWallData.down.images[i] = scaleHorizImage(t, horizHeight, backWidth, foreWidth, (backWidth - foreWidth) / 2)
 				end
 
 			elseif breadth == 1 or depth > 0 then
 				-- side walls
 				local leftHeight = backHeight
 				local rightHeight = foreHeight
-				local floorHeight = crawl.round((foreHeight - backHeight) / 2)
-				local wallWidth = crawl.round((foreWidth - backWidth) * ((breadth - 1) * 2 + 1) / 2)
+				local floorHeight = round((foreHeight - backHeight) / 2)
+				local wallWidth = round((foreWidth - backWidth) * ((breadth - 1) * 2 + 1) / 2)
 				newWallData.side = {
-					x = crawl.round(backWidth * -0.5 + backWidth * breadth),
-					y = crawl.round(foreHeight * -0.5),
+					x = round(backWidth * -0.5 + backWidth * breadth),
+					y = round(foreHeight * -0.5),
 					images = {}
 				}
 				-- print(string.format("depth %d breadth %d backWidth %d foreWidth %d x %d wallwidth %d", depth, breadth, backWidth, foreWidth, newWallData.side.x, wallWidth))
 				for i, t in ipairs(tempWalls) do
-					newWallData.side.images[i] = crawl.scaleWallImage(t, wallWidth, leftHeight, rightHeight)
+					newWallData.side.images[i] = scaleWallImage(t, wallWidth, leftHeight, rightHeight)
 				end
 
 				-- side ceilings and floors
-				local foreCorner = crawl.round(foreWidth * -0.5 + foreWidth * breadth)
-				local backCorner = crawl.round(backWidth * -0.5 + backWidth * breadth)
+				local foreCorner = round(foreWidth * -0.5 + foreWidth * breadth)
+				local backCorner = round(backWidth * -0.5 + backWidth * breadth)
 				newWallData.up = {
 					x = backCorner,
 					y = foreHeight * -0.5,
 					images = {}
 				}
 				for i, t in ipairs(tempCeilings) do
-					newWallData.up.images[i] = crawl.scaleHorizImage(t, floorHeight, foreWidth, backWidth, backCorner - foreCorner)
+					newWallData.up.images[i] = scaleHorizImage(t, floorHeight, foreWidth, backWidth, backCorner - foreCorner)
 					-- print(string.format("depth %d breadth %d images %d", depth, breadth, #newWallData.up.images))
 					-- print(newWallData.up.images[i])
 				end
@@ -132,7 +227,7 @@ function crawl.init(wallImages, ceilingImages, floorImages, contentsImages, wall
 					images = {}
 				}
 				for i, t in ipairs(tempFloors) do
-					newWallData.down.images[i] = crawl.scaleHorizImage(t, floorHeight, backWidth, foreWidth, foreCorner - backCorner)
+					newWallData.down.images[i] = scaleHorizImage(t, floorHeight, backWidth, foreWidth, foreCorner - backCorner)
 				end
 			end
 
@@ -148,7 +243,7 @@ function crawl.setSkyImage(image)
 	else
 		crawl.skyImage = love.graphics.newImage(image)
 		local skyW, skyH = crawl.skyImage:getDimensions()
-		local skyFaceW = crawl.round(skyW / 4)
+		local skyFaceW = round(skyW / 4)
 		crawl.skyQuads = {}
 		for i = 1, 4 do
 			crawl.skyQuads[i] = love.graphics.newQuad((i - 1) * skyFaceW, 0, skyFaceW, skyH, crawl.skyImage)
@@ -181,7 +276,7 @@ function crawl.draw(canvas, x, y, facing)
 	if crawl.skyImage ~= nil then
 		local skyX, skyY, skyW, skyH = crawl.skyQuads[facing]:getViewport()
 		local skyScale = ch / skyH
-		love.graphics.draw(crawl.skyImage, crawl.skyQuads[facing], 0, 0, 0, skyScale, skyScale, crawl.round(skyW / 2), crawl.round(skyH / 2))
+		love.graphics.draw(crawl.skyImage, crawl.skyQuads[facing], 0, 0, 0, skyScale, skyScale, round(skyW / 2), round(skyH / 2))
 	end
 	
 	for depth = crawl.maxDepth, 0, -1 do
@@ -239,13 +334,13 @@ function crawl.draw(canvas, x, y, facing)
 			local contents = crawl.contentsIndexFunction(wx, wy)
 			if contents ~= nil then
 				for i, c in ipairs(contents) do
-					local cy = crawl.round((foreY - backY) * c[3] + backY)
-					local cw = crawl.round((floorWidth - backWidth) * c[3] + backWidth)
+					local cy = round((foreY - backY) * c[3] + backY)
+					local cw = round((floorWidth - backWidth) * c[3] + backWidth)
 					local cx = (cw * -0.5) + (cw * breadth) + (cw * c[2])
 					local ctw, cth = crawl.contentsImages[c[1]]:getDimensions()
 					local cScale = crawl.setBack / (crawl.setBack + depth - 1 + (1.0 - c[3]))
-					-- print(string.format("cx %d cy %d scale %f w %d h %d", cx, cy, wallData.scale, crawl.round(ctw/2), cth))
-					love.graphics.draw(crawl.contentsImages[c[1]], cx, cy, 0, cScale, cScale, crawl.round(ctw / 2), cth)
+					-- print(string.format("cx %d cy %d scale %f w %d h %d", cx, cy, wallData.scale, round(ctw/2), cth))
+					love.graphics.draw(crawl.contentsImages[c[1]], cx, cy, 0, cScale, cScale, round(ctw / 2), cth)
 				end
 			end
 		end
@@ -289,95 +384,6 @@ function crawl.draw(canvas, x, y, facing)
 	love.graphics.setDefaultFilter(filterMin, filterMag, filterAni)
 end
 
-function crawl.scaleWallImage(image, width, leftHeight, rightHeight)
-	local tw, th = image:getDimensions()
-	local height = math.max(leftHeight, rightHeight)
-	local scaleImage = love.image.newImageData(width, height)
-	local x2
-	local y2
-	local scaledHeight
-	local scaledTop
-	local scaledBottom
-	local r
-	local g
-	local b
-	local a
-	local dim
-
-	for x1 = 0, width - 1 do
-		if leftHeight ~= rightHeight then
-			--x2 = crawl.round(math.sqrt(1 - ((width - x1) / width) * ((width - x1) / width)) * tw)
-			x2 = math.floor(math.log(x1 / width * 3.0 + 1.0, 4) * tw)
-		else
-			x2 = math.floor(tw / width * x1)
-		end
-		scaledHeight = crawl.round((rightHeight - leftHeight) / width * x1 + leftHeight)
-		-- print(string.format("leftHeight %d rightHeight %d width %d x1 %d x2 %d", leftHeight, rightHeight, width, x1, x2))
-		scaledTop = (height - scaledHeight) / 2
-		scaledBottom = scaledTop + scaledHeight - 1
-		-- print(string.format("height %d scaledHeight %d scaledTop %d scaledBottom %d", height, scaledHeight, scaledTop, scaledBottom))
-		dim = ((scaledBottom - scaledTop) / crawl.wallHeight) * crawl.dimming + (1.0 - crawl.dimming)
-
-		for y1 = scaledTop, scaledBottom do
-			y2 = math.floor((th / scaledHeight) * (y1 - scaledTop))
-			-- print(string.format("%d %d %d %d %d %d", x1, y1, x2, y2, width, height))
-			r, g, b, a = image:getPixel(x2, y2)
-			scaleImage:setPixel(x1, y1, r * dim, g * dim, b * dim, a)
-		end
-	end
-
-	return love.graphics.newImage(scaleImage)
-end
-
-function crawl.scaleHorizImage(image, height, topWidth, bottomWidth, slant)
-	local tw, th = image:getDimensions()
-	local topLeft = 0
-	local topRight = topWidth - 1
-	local bottomLeft = slant
-	local bottomRight = bottomWidth + slant - 1
-	local width = math.max(topRight, bottomRight) - math.min(topLeft, bottomLeft) + 1
-	-- print(string.format("scale to w %d h %d", width, height))
-	local scaleImage = love.image.newImageData(width, height)
-	local scaledWidth
-	local scaledLeft
-	local scaledRight
-	local x2
-	local y2
-	local r
-	local g
-	local b
-	local a
-	local dim
-
-	for y1 = 0, height - 1 do
-		if topWidth < bottomWidth then
-			y2 = math.floor(math.log(y1 / height * 3.0 + 1.0, 4) * th)
-		else
-			y2 = math.floor(math.log((height - 1 - y1) / height * 3.0 + 1.0, 4) * th)
-		end
-		scaledWidth = crawl.round((bottomWidth - topWidth) / height * y1 + topWidth)
-		-- scaledLeft = crawl.round((bottomLeft - topLeft) / height * y1 + topLeft)
-		-- so the question of scaledLeft is different in this method
-		-- it either starts at 0 and shifts right as we go (if bottomLeft >= 0)
-		-- or starts indented and shifts left until it reaches zero (if bottomLeft < 0)
-		if bottomLeft >= 0 then
-			scaledLeft = crawl.round(slant / height * y1)
-		else
-			scaledLeft = crawl.round(-bottomLeft + slant / height * y1)
-		end
-		scaledRight = scaledLeft + scaledWidth - 1
-		dim = ((scaledRight - scaledLeft) / crawl.wallWidth * crawl.dimming) + (1.0 - crawl.dimming)
-
-		for x1 = scaledLeft, scaledRight do
-			x2 = math.floor((tw / scaledWidth) * (x1 - scaledLeft))
-			-- print(string.format("topleft %d topright %d bottomleft %d bottomright %d width %d height %d x1 %d y1 %d x2 %d y2 %d", topLeft, topRight, bottomLeft, bottomRight, width, height, x1, y1, x2, y2))
-			r, g, b, a = image:getPixel(x2, y2)
-			scaleImage:setPixel(x1, y1, r * dim, g * dim, b * dim, a)
-		end
-	end
-
-	return love.graphics.newImage(scaleImage)
-end
 
 return crawl
 
