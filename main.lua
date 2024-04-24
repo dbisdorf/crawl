@@ -2,6 +2,7 @@
 -- use item
 -- outdoor area with sky
 -- more constants
+-- redraw graphics
 
 crawl = require "crawl/crawl"
 
@@ -177,7 +178,28 @@ function love.draw()
 	end
 end
 
--- callback functions for crawl library
+-- crawl library initializtion and callbacks
+
+function setupCrawl()
+	-- initialize the crawl library
+	wallImages = {
+		"assets/wall.png", 
+		"assets/door.png", 
+		"assets/opendoor.png"
+	}
+	floorImages = {
+		"assets/floor.png"
+	}
+	contentsImages = {
+		"assets/skeleton.png", 
+		"assets/potion1.png", 
+		"assets/potion2.png"
+	}
+	crawl.init(wallImages, floorImages, floorImages, contentsImages, 
+		600, 600, 4, 0.8, 0.5, 
+		surfaceIndexFunction, contentsIndexFunction)
+	crawl.setSkyImage("assets/sky.png")
+end
 
 function surfaceIndexFunction(surface, x, y, face)
 	-- print(string.format("x %d y %d face %d", x, y, face))
@@ -214,26 +236,6 @@ function contentsIndexFunction(x, y)
 end
 
 -- maze logic
-
-function setupCrawl()
-	wallImages = {
-		"assets/wall.png", 
-		"assets/door.png", 
-		"assets/opendoor.png"
-	}
-	floorImages = {
-		"assets/floor.png"
-	}
-	contentsImages = {
-		"assets/skeleton.png", 
-		"assets/potion1.png", 
-		"assets/potion2.png"
-	}
-	crawl.init(wallImages, floorImages, floorImages, contentsImages, 
-		600, 600, 4, 0.8, 0.5, 
-		surfaceIndexFunction, contentsIndexFunction)
-	crawl.setSkyImage("assets/sky.png")
-end
 
 function wallBetween(x1, y1, x2, y2)
 	for i, w in ipairs(WALLS) do
