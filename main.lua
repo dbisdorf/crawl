@@ -81,9 +81,9 @@ function love.load()
 
 	canvas = love.graphics.newCanvas(1024, 768)
 	redraw = true
-	playerX = 1
+	playerX = 4
 	playerY = 1
-	playerFace = 2
+	playerFace = 3
 	hoveredButton = 0
 	crawlSetup = false
 	waitMessage = false
@@ -185,7 +185,8 @@ function setupCrawl()
 	wallImages = {
 		"assets/wall.png", 
 		"assets/door.png", 
-		"assets/opendoor.png"
+		"assets/opendoor.png",
+		"assets/outerwall.png"
 	}
 	floorImages = {
 		"assets/floor.png"
@@ -203,15 +204,24 @@ end
 
 function surfaceIndexFunction(surface, x, y, face)
 	-- print(string.format("x %d y %d face %d", x, y, face))
-	if x < 0 or x > 6 or y < 0 or y > 6 then
-		-- out of bounds
+	local x2 = x 
+	local y2 = y 
+	if face > 0 then
+		x2 = x + crawl.steps[face][1]
+		y2 = y + crawl.steps[face][2]
+	end
+	local oob1 = outOfBounds(x, y)
+	local oob2 = outOfBounds(x2, y2)
+	if oob1 and oob2 then
+		-- completely out of bounds
 		return 0
 	elseif surface == "wall" then
 		-- walls
-		local x2 = x + crawl.steps[face][1]
-		local y2 = y + crawl.steps[face][2]
-		if x == 0 or x == 6 or y == 0 or y == 6 or x2 == 0 or x2 == 6 or y2 == 0 or y2 == 6 then
+		if oob1 or oob2 then
 			-- boundary walls
+			if x > 3 and y < 3 then
+				return 4
+			end
 			return 1
 		else
 			-- interior walls
@@ -222,7 +232,10 @@ function surfaceIndexFunction(surface, x, y, face)
 		return 1
 	elseif surface == "ceiling" then
 		-- ceilings
-		return 1
+		if x < 4 or y > 2 then
+			return 1
+		end
+		return 0
 	end
 end
 
@@ -236,6 +249,10 @@ function contentsIndexFunction(x, y)
 end
 
 -- maze logic
+
+function outOfBounds(x, y)
+	return (x < 1 or x > 5 or y < 1 or y > 5)
+end
 
 function wallBetween(x1, y1, x2, y2)
 	for i, w in ipairs(WALLS) do

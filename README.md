@@ -15,6 +15,10 @@ You also give the library a couple of callback functions that will return inform
 
 When you want to draw a view of the dungeon, you create a Canvas and pass it to the library. The library will draw a view of your dungeon onto your Canvas. You can then draw the Canvas to the screen wherever and whenver you like.
 
+## Example game
+
+The example game in this repository (represented by main.lua, conf.lua, and everything in the assets folder) is certainly not a complete dungeon crawler game, but it should demonstrate the capabilities of the library. The game controls appear in the lower right corner of the screen; use your mouse to click them or press the indicated keys. Use the attack (sword) action to destroy a monster; use the interact (hand) action to open or close doors or pick up loot.
+
 ## Including in your project
 
 Add crawl.lua to your project directory and add the following statement to your code:
