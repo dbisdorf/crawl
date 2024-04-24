@@ -75,8 +75,8 @@ function love.load()
 
 	frameImage = love.graphics.newImage("assets/frame.png")
 	lootImages = {
-		love.graphics.newImage("assets/potion1.png"),
-		love.graphics.newImage("assets/potion2.png")
+		love.graphics.newImage("assets/potion.png"),
+		love.graphics.newImage("assets/scroll.png")
 	}
 
 	canvas = love.graphics.newCanvas(1024, 768)
@@ -161,7 +161,7 @@ function love.draw()
 	-- draw inventory
 	for i, loot in ipairs(inventory) do
 		if loot > 0 then
-			love.graphics.draw(lootImages[loot - 1], BUTTONS[i].x + 6, BUTTONS[i].y + 4)
+			love.graphics.draw(lootImages[loot - 1], BUTTONS[i].x + 6, BUTTONS[i].y + 6)
 		end
 	end
 
@@ -192,8 +192,8 @@ function setupCrawl()
 	}
 	contentsImages = {
 		"assets/skeleton.png", 
-		"assets/potion1.png", 
-		"assets/potion2.png"
+		"assets/potion.png", 
+		"assets/scroll.png"
 	}
 	crawl.init(wallImages, floorImages, floorImages, contentsImages, 
 		600, 600, 4, 0.8, 0.5, 
