@@ -88,9 +88,9 @@ contents = {
 }
 
 heroStats = {
-	{name = "Alpha", hits = 17},
-	{name = "Beta", hits = 3},
-	{name = "Gamma", hits = 11}
+	{name = "Aria", hits = 17},
+	{name = "Bess", hits = 3},
+	{name = "Gillian", hits = 11}
 }
 
 inventory = {}
