@@ -24,7 +24,7 @@ The example game in this repository (represented by main.lua, conf.lua, and ever
 Add crawl.lua to your project directory and add the following statement to your code:
 
 ```
-require "crawl"
+crawl = require "crawl"
 ```
 
 Modify this statement appropriately if you wish to put crawl.lua in a different directory.
