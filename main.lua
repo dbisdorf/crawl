@@ -1,8 +1,7 @@
 -- TODO
--- use item
--- outdoor area with sky
 -- more constants
--- redraw graphics
+-- redraw monster
+-- hero heads
 
 crawl = require "crawl/crawl"
 
