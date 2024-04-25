@@ -1,6 +1,4 @@
 -- TODO
--- more constants
--- redraw monster
 -- hero heads
 
 crawl = require "crawl/crawl"
@@ -53,6 +51,35 @@ BUTTONS = {
 
 BUTTON_SIZE = 64
 
+DUNGEON_VIEW_SIZE = {1024, 768}
+DUNGEON_VIEW_ORIGIN = {16, 17}
+WINDOW_SIZE = {1280, 800}
+HERO_STATS_LEFT = 1152
+HERO_STATS_SPACING = 128
+INV_OFFSET = 6
+
+WALL_IMAGES = {
+	"assets/wall.png", 
+	"assets/door.png", 
+	"assets/opendoor.png",
+	"assets/outerwall.png"
+}
+FLOOR_IMAGES = {
+	"assets/floor.png"
+}
+CONTENTS_IMAGES = {
+	"assets/skeleton.png", 
+	"assets/potion.png", 
+	"assets/scroll.png"
+}
+SKY_IMAGE = "assets/sky.png"
+FRAME_IMAGE = "assets/frame.png"
+
+NEAR_WALL_SIZE = 600
+DRAW_DEPTH = 4
+DRAW_SETBACK = 0.8
+DIMMING = 0.5
+
 -- global variables
 
 contents = {
@@ -72,13 +99,13 @@ inventory = {}
 
 function love.load()
 
-	frameImage = love.graphics.newImage("assets/frame.png")
+	frameImage = love.graphics.newImage(FRAME_IMAGE)
 	lootImages = {
-		love.graphics.newImage("assets/potion.png"),
-		love.graphics.newImage("assets/scroll.png")
+		love.graphics.newImage(CONTENTS_IMAGES[2]),
+		love.graphics.newImage(CONTENTS_IMAGES[3])
 	}
 
-	canvas = love.graphics.newCanvas(1024, 768)
+	canvas = love.graphics.newCanvas(DUNGEON_VIEW_SIZE[1], DUNGEON_VIEW_SIZE[2])
 	redraw = true
 	playerX = 4
 	playerY = 1
@@ -137,7 +164,7 @@ function love.draw()
 	-- if the library isn't set up, show a waiting message
 	if not crawlSetup then
 		waitMessage = true
-		love.graphics.printf("Please wait...", 0, 400, 1280, "center")
+		love.graphics.printf("Please wait...", 0, WINDOW_SIZE[2] / 2, WINDOW_SIZE[1], "center")
 		return
 	end
 
@@ -149,18 +176,18 @@ function love.draw()
 
 	-- draw the UI frame and the dungeon view canvas
 	love.graphics.draw(frameImage)
-	love.graphics.draw(canvas, 16, 16)
+	love.graphics.draw(canvas, DUNGEON_VIEW_ORIGIN[1], DUNGEON_VIEW_ORIGIN[2])
 
 	-- draw hero stats
 	for i, hero in ipairs(heroStats) do
-		love.graphics.print(hero.name, 1152, 128 * i - 64)
-		love.graphics.print(string.format("Hits: %d", hero.hits), 1152, 128 * i - 48)
+		love.graphics.print(hero.name, HERO_STATS_LEFT, math.floor(HERO_STATS_SPACING * (i - 0.5)))
+		love.graphics.print(string.format("Hits: %d", hero.hits), HERO_STATS_LEFT, math.floor(HERO_STATS_SPACING * (i - 0.2)))
 	end
 
 	-- draw inventory
 	for i, loot in ipairs(inventory) do
 		if loot > 0 then
-			love.graphics.draw(lootImages[loot - 1], BUTTONS[i].x + 6, BUTTONS[i].y + 6)
+			love.graphics.draw(lootImages[loot - 1], BUTTONS[i].x + INV_OFFSET, BUTTONS[i].y + INV_OFFSET)
 		end
 	end
 
@@ -181,28 +208,13 @@ end
 
 function setupCrawl()
 	-- initialize the crawl library
-	wallImages = {
-		"assets/wall.png", 
-		"assets/door.png", 
-		"assets/opendoor.png",
-		"assets/outerwall.png"
-	}
-	floorImages = {
-		"assets/floor.png"
-	}
-	contentsImages = {
-		"assets/skeleton.png", 
-		"assets/potion.png", 
-		"assets/scroll.png"
-	}
-	crawl.init(wallImages, floorImages, floorImages, contentsImages, 
-		600, 600, 4, 0.8, 0.5, 
+	crawl.init(WALL_IMAGES, FLOOR_IMAGES, FLOOR_IMAGES, CONTENTS_IMAGES, 
+		NEAR_WALL_SIZE, NEAR_WALL_SIZE, DRAW_DEPTH, DRAW_SETBACK, DIMMING, 
 		surfaceIndexFunction, contentsIndexFunction)
-	crawl.setSkyImage("assets/sky.png")
+	crawl.setSkyImage(SKY_IMAGE)
 end
 
 function surfaceIndexFunction(surface, x, y, face)
-	-- print(string.format("x %d y %d face %d", x, y, face))
 	local x2 = x 
 	local y2 = y 
 	if face > 0 then
