@@ -38,7 +38,7 @@ local function scaleWallImage(image, width, leftHeight, rightHeight)
 		scaledBottom = scaledTop + scaledHeight - 1
 
 		if x1 == 0 then
-			print(string.format("scaledHeight %d scaledTop %d scaledBottom %d", scaledHeight, scaledTop, scaledBottom))
+			-- print(string.format("scaledHeight %d scaledTop %d scaledBottom %d", scaledHeight, scaledTop, scaledBottom))
 		end
 
 		dim = ((scaledBottom - scaledTop) / crawl.wallHeight) * crawl.dimming + (1.0 - crawl.dimming)
@@ -91,8 +91,9 @@ local function scaleHorizImage(image, height, topWidth, bottomWidth, slant)
 		scaledRight = scaledLeft + scaledWidth - 1
 		dim = ((scaledRight - scaledLeft) / crawl.wallWidth * crawl.dimming) + (1.0 - crawl.dimming)
 
-		if width == 600 and y1 == 0 then
-			-- print(string.format("bottomLeft %d bottomWidth %d width %d height %d scaledLeft %d scaledRight %d", bottomLeft, bottomWidth, width, height, scaledLeft, scaledRight))
+		if bottomWidth == 600 and y1 == 0 then
+			print(string.format("bottomLeft %d bottomWidth %d width %d height %d scaledLeft %d scaledRight %d", bottomLeft, bottomWidth, width, height, scaledLeft, scaledRight))
+			-- print(string.format("tw %d scaledWidth %d tw over scaledWidth %f", tw, scaledWidth, tw / scaledWidth))
 		end
 
 		for x1 = scaledLeft, scaledRight do
@@ -160,7 +161,7 @@ function crawl.init(wallImages, ceilingImages, floorImages, contentsImages, wall
 			local backScale = setBack / (setBack + depth)
 			local backWidth = round(wallWidth * backScale)
 			local backHeight = round(wallHeight * backScale)
-			print(string.format("depth %d breadth %d foreWidth %d foreHeight %d backWidth %d backHeight %d", depth, breadth, foreWidth, foreHeight, backWidth, backHeight))
+			-- print(string.format("depth %d breadth %d foreWidth %d foreHeight %d backWidth %d backHeight %d", depth, breadth, foreWidth, foreHeight, backWidth, backHeight))
 
 			if breadth == 0 then
 				-- back walls
@@ -171,7 +172,7 @@ function crawl.init(wallImages, ceilingImages, floorImages, contentsImages, wall
 					y = round(backHeight * -0.5),
 					images = {}
 				}
-				print(string.format("back wall x %d y %d", newWallData.back.x, newWallData.back.y))
+				-- print(string.format("back wall x %d y %d", newWallData.back.x, newWallData.back.y))
 				for i, t in ipairs(tempWalls) do
 					newWallData.back.images[i] = scaleWallImage(t, backWidth, leftHeight, rightHeight)
 				end
@@ -183,7 +184,7 @@ function crawl.init(wallImages, ceilingImages, floorImages, contentsImages, wall
 					y = round(foreHeight * -0.5),
 					images = {}
 				}
-				print(string.format("ceiling x %d y %d", newWallData.up.x, newWallData.up.y))
+				-- print(string.format("ceiling x %d y %d", newWallData.up.x, newWallData.up.y))
 				for i, t in ipairs(tempCeilings) do
 					newWallData.up.images[i] = scaleHorizImage(t, horizHeight, foreWidth, backWidth, (foreWidth - backWidth) / 2)
 				end
@@ -192,7 +193,7 @@ function crawl.init(wallImages, ceilingImages, floorImages, contentsImages, wall
 					y = round(foreHeight * 0.5) - horizHeight,
 					images = {}
 				}
-				print(string.format("floor x %d y %d", newWallData.down.x, newWallData.down.y))
+				print(string.format("depth %d breadth %d floor x %d y %d backWidth %d", depth, breadth, newWallData.down.x, newWallData.down.y, backWidth))
 				for i, t in ipairs(tempFloors) do
 					newWallData.down.images[i] = scaleHorizImage(t, horizHeight, backWidth, foreWidth, (backWidth - foreWidth) / 2)
 				end
@@ -208,20 +209,20 @@ function crawl.init(wallImages, ceilingImages, floorImages, contentsImages, wall
 					y = round(foreHeight * -0.5),
 					images = {}
 				}
-				print(string.format("side wall x %d y %d wallWidth %d", newWallData.side.x, newWallData.side.y, wallWidth))
+				-- print(string.format("side wall x %d y %d wallWidth %d", newWallData.side.x, newWallData.side.y, wallWidth))
 				for i, t in ipairs(tempWalls) do
 					newWallData.side.images[i] = scaleWallImage(t, wallWidth, leftHeight, rightHeight)
 				end
 
 				-- side ceilings and floors
 				local foreCorner = round(foreWidth * -0.5 + foreWidth * breadth)
-				local backCorner = round(backWidth * -0.5 + backWidth * breadth)
+				local backCorner = math.floor(backWidth * -0.5 + backWidth * breadth)
 				newWallData.up = {
 					x = backCorner,
 					y = round(foreHeight * -0.5),
 					images = {}
 				}
-				print(string.format("side ceiling x %d y %d", newWallData.up.x, newWallData.up.y))
+				-- print(string.format("side ceiling x %d y %d", newWallData.up.x, newWallData.up.y))
 				for i, t in ipairs(tempCeilings) do
 					newWallData.up.images[i] = scaleHorizImage(t, floorHeight, foreWidth, backWidth, backCorner - foreCorner)
 				end
@@ -230,7 +231,7 @@ function crawl.init(wallImages, ceilingImages, floorImages, contentsImages, wall
 					y = round(foreHeight * 0.5) - floorHeight,
 					images = {}
 				}
-				print(string.format("side floor x %d y %d", newWallData.down.x, newWallData.down.y))
+				print(string.format("depth %d breadth %d side floor x %d y %d backWidth %d", depth, breadth, newWallData.down.x, newWallData.down.y, backWidth))
 				for i, t in ipairs(tempFloors) do
 					newWallData.down.images[i] = scaleHorizImage(t, floorHeight, backWidth, foreWidth, foreCorner - backCorner)
 				end
