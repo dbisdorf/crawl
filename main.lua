@@ -1,6 +1,3 @@
--- TODO
--- hero heads
-
 crawl = require "crawl/crawl"
 
 -- constants

@@ -14,6 +14,7 @@ end
 local function scaleWallImage(image, width, leftHeight, rightHeight)
 	local tw, th = image:getDimensions()
 	local height = math.max(leftHeight, rightHeight)
+	local x1Max = width - 1
 	local scaleImage = love.image.newImageData(width, height)
 	local x2
 	local y2
@@ -26,19 +27,25 @@ local function scaleWallImage(image, width, leftHeight, rightHeight)
 	local a
 	local dim
 
-	for x1 = 0, width - 1 do
+	for x1 = 0, x1Max do
 		if leftHeight ~= rightHeight then
-			x2 = math.floor(math.log(x1 / width * 3.0 + 1.0, 4) * tw)
+			x2 = math.floor(math.log(x1 / x1Max * 3.0 + 1.0, 4) * (tw - 1))
 		else
-			x2 = math.floor(tw / width * x1)
+			x2 = math.floor((tw - 1) / x1Max * x1)
 		end
-		scaledHeight = round((rightHeight - leftHeight) / width * x1 + leftHeight)
-		scaledTop = (height - scaledHeight) / 2
+		scaledHeight = round((rightHeight - leftHeight) / x1Max * x1 + leftHeight)
+		scaledTop = round((height - scaledHeight) / 2)
 		scaledBottom = scaledTop + scaledHeight - 1
+
+		if x1 == 0 then
+			print(string.format("scaledHeight %d scaledTop %d scaledBottom %d", scaledHeight, scaledTop, scaledBottom))
+		end
+
 		dim = ((scaledBottom - scaledTop) / crawl.wallHeight) * crawl.dimming + (1.0 - crawl.dimming)
 
 		for y1 = scaledTop, scaledBottom do
 			y2 = math.floor((th / scaledHeight) * (y1 - scaledTop))
+			-- print(string.format("x2 %d y2 %d", x2, y2))
 			r, g, b, a = image:getPixel(x2, y2)
 			scaleImage:setPixel(x1, y1, r * dim, g * dim, b * dim, a)
 		end
@@ -84,7 +91,7 @@ local function scaleHorizImage(image, height, topWidth, bottomWidth, slant)
 		scaledRight = scaledLeft + scaledWidth - 1
 		dim = ((scaledRight - scaledLeft) / crawl.wallWidth * crawl.dimming) + (1.0 - crawl.dimming)
 
-		if width == 600 and y1 == y1Max then
+		if width == 600 and y1 == 0 then
 			-- print(string.format("bottomLeft %d bottomWidth %d width %d height %d scaledLeft %d scaledRight %d", bottomLeft, bottomWidth, width, height, scaledLeft, scaledRight))
 		end
 
@@ -192,7 +199,7 @@ function crawl.init(wallImages, ceilingImages, floorImages, contentsImages, wall
 
 			elseif breadth == 1 or depth > 0 then
 				-- side walls
-				local leftHeight = backHeight
+				local leftHeight = backHeight + 2
 				local rightHeight = foreHeight
 				local floorHeight = round((foreHeight - backHeight) / 2)
 				local wallWidth = round((foreWidth - backWidth) * ((breadth - 1) * 2 + 1) / 2)
