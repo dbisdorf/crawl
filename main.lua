@@ -74,7 +74,7 @@ FRAME_IMAGE = "assets/frame.png"
 
 NEAR_WALL_SIZE = 600
 DRAW_DEPTH = 4
-DRAW_SETBACK = 0.8
+DRAW_SETBACK = 0.5
 DIMMING = 0.5
 
 -- global variables

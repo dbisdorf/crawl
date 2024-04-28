@@ -86,7 +86,7 @@ local function scaleHorizImage(image, height, topWidth, bottomWidth, slant)
 			scaledLeft = math.floor(slant / y1Max * y1)
 			-- print(string.format("slant %d height %d y1 %d scaledLeft %d", slant, height, y1, scaledLeft))
 		else
-			scaledLeft = math.floor(-bottomLeft + slant / y1Max * y1)
+			scaledLeft = math.floor(-bottomLeft + slant * (y1 / y1Max))
 		end
 		scaledRight = scaledLeft + scaledWidth - 1
 		dim = ((scaledRight - scaledLeft) / crawl.wallWidth * crawl.dimming) + (1.0 - crawl.dimming)
@@ -100,6 +100,7 @@ local function scaleHorizImage(image, height, topWidth, bottomWidth, slant)
 			x2 = math.floor((tw / scaledWidth) * (x1 - scaledLeft))
 			-- print(string.format("x2 %d y2 %d", x2, y2))
 			r, g, b, a = image:getPixel(x2, y2)
+			-- print(string.format("scaledLeft %d bottomLeft %d slant %d x1 %d y1 %d ZZZ %f", scaledLeft, bottomLeft, slant, x1, y1, -bottomLeft + slant / y1Max * y1))
 			scaleImage:setPixel(x1, y1, r * dim, g * dim, b * dim, a)
 		end
 	end
@@ -152,7 +153,8 @@ function crawl.init(wallImages, ceilingImages, floorImages, contentsImages, wall
 			local newWallData = {}
 			local forwardScale
 			if depth == 0 then
-				forwardScale = setBack / 0.1
+				--forwardScale = setBack / 0.1
+				forwardScale = 4
 			else
 				forwardScale = setBack / (setBack + depth - 1)
 			end
