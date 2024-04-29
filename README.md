@@ -83,14 +83,13 @@ You must write these functions yourself and pass their names to crawl.init. You 
 
 For both functions, the library will pass you the coordinates of a square within the dungeon, and you must return information about the image or images you want the library to draw at these coordinates. When you return the numerical index of an image, this index refers to the order in which your images appeared in the image arrays that you passed to crawl.init.
 
-**surfaceIndexFunction(surface, x, y, face)**
+**surfaceIndexFunction(x, y, face)**
 
 This function describes the geometry of the dungeon. It must return the numerical index of a wall, floor, or ceiling image corresponding to a given dungeon square.
 
-- **surface**: This will be "wall" if you should return the desired wall image index, "ceiling" for a ceiling image, or "floor" for a floor iamge.
 - **x**: the x position of the surface you should return.
 - **y**: the y position of the surface you should return.
-- **face**: if *surface* is "wall", this will be the face of the dungeon square you should return an image index for (1=north, 2=east, 3=south, 4=west).
+- **face**: This will be the face of the dungeon square you should return an image index for (1=north, 2=east, 3=south, 4=west, 5=ceiling, 6=floor).
 
 **contentsIndexFunction(x, y)**
 
