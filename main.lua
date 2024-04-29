@@ -74,7 +74,7 @@ FRAME_IMAGE = "assets/frame.png"
 
 NEAR_WALL_SIZE = 600
 DRAW_DEPTH = 4
-DRAW_SETBACK = 0.5
+DRAW_SETBACK = 0.8
 DIMMING = 0.5
 
 -- global variables
@@ -211,10 +211,10 @@ function setupCrawl()
 	crawl.setSkyImage(SKY_IMAGE)
 end
 
-function surfaceIndexFunction(surface, x, y, face)
+function surfaceIndexFunction(x, y, face)
 	local x2 = x 
 	local y2 = y 
-	if face > 0 then
+	if face < 5 then
 		x2 = x + crawl.steps[face][1]
 		y2 = y + crawl.steps[face][2]
 	end
@@ -223,7 +223,7 @@ function surfaceIndexFunction(surface, x, y, face)
 	if oob1 and oob2 then
 		-- completely out of bounds
 		return 0
-	elseif surface == "wall" then
+	elseif face < 5 then
 		-- walls
 		if oob1 or oob2 then
 			-- boundary walls
@@ -235,15 +235,15 @@ function surfaceIndexFunction(surface, x, y, face)
 			-- interior walls
 			return wallBetween(x, y, x2, y2)
 		end
-	elseif surface == "floor" then
-		-- floors
-		return 1
-	elseif surface == "ceiling" then
+	elseif face == 5 then
 		-- ceilings
 		if x < 4 or y > 2 then
 			return 1
 		end
 		return 0
+	elseif face == 6 then
+		-- floors
+		return 1
 	end
 end
 
@@ -377,7 +377,7 @@ function executeControl(control)
 			redraw = true
 		end
 	elseif control == "attack" then
-		local wall = surfaceIndexFunction("wall", playerX, playerY, playerFace)
+		local wall = surfaceIndexFunction(playerX, playerY, playerFace)
 		if wall == 0 or wall == 2 then
 			if attackMonster(playerX + crawl.steps[playerFace][1], playerY + crawl.steps[playerFace][2]) then
 				redraw = true

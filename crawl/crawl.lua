@@ -153,7 +153,7 @@ function crawl.init(wallImages, ceilingImages, floorImages, contentsImages, wall
 			local newWallData = {}
 			local forwardScale
 			if depth == 0 then
-				--forwardScale = setBack / 0.1
+				-- I haven't decided how to calculate this value; this hardcoded value seems to be good enough for now.
 				forwardScale = 4
 			else
 				forwardScale = setBack / (setBack + depth - 1)
@@ -298,7 +298,7 @@ function crawl.draw(canvas, x, y, facing)
 		for breadth = -drawBreadth, drawBreadth do
 			wx = x + crawl.steps[facing][1] * depth + crawl.steps[faceRight][1] * breadth
 			wy = y + crawl.steps[facing][2] * depth + crawl.steps[faceRight][2] * breadth
-			wall = crawl.surfaceIndexFunction("wall", wx, wy, facing)
+			wall = crawl.surfaceIndexFunction(wx, wy, facing)
 			if wall > 0 then
 				wallData = crawl.wallData[depth][0].back
 				local ww, wh = wallData.images[wall]:getDimensions()
@@ -315,12 +315,12 @@ function crawl.draw(canvas, x, y, facing)
 			end
 			wx = x + crawl.steps[facing][1] * depth + crawl.steps[faceRight][1] * breadth
 			wy = y + crawl.steps[facing][2] * depth + crawl.steps[faceRight][2] * breadth
-			wall = crawl.surfaceIndexFunction("ceiling", wx, wy, 0)
+			wall = crawl.surfaceIndexFunction(wx, wy, 5)
 			if wall > 0 then
 				wallData = crawl.wallData[depth][math.abs(breadth)].up
 				love.graphics.draw(wallData.images[wall], wallData.x * flip, wallData.y, 0, flip, 1)
 			end
-			wall = crawl.surfaceIndexFunction("floor", wx, wy, 0)
+			wall = crawl.surfaceIndexFunction(wx, wy, 6)
 			if wall > 0 then
 				wallData = crawl.wallData[depth][math.abs(breadth)].down
 				love.graphics.draw(wallData.images[wall], wallData.x * flip, wallData.y, 0, flip, 1)
@@ -356,7 +356,7 @@ function crawl.draw(canvas, x, y, facing)
 				-- left side
 				wx = x + crawl.steps[facing][1] * depth + crawl.steps[faceLeft][1] * -breadth
 				wy = y + crawl.steps[facing][2] * depth + crawl.steps[faceLeft][2] * -breadth
-				wall = crawl.surfaceIndexFunction("wall", wx, wy, faceRight)
+				wall = crawl.surfaceIndexFunction(wx, wy, faceRight)
 				if wall > 0 then
 					wallData = crawl.wallData[depth][-breadth].side
 					love.graphics.draw(wallData.images[wall], -wallData.x, wallData.y, 0, -1, 1)
@@ -365,7 +365,7 @@ function crawl.draw(canvas, x, y, facing)
 				-- right side
 				wx = x + crawl.steps[facing][1] * depth + crawl.steps[faceRight][1] * breadth
 				wy = y + crawl.steps[facing][2] * depth + crawl.steps[faceRight][2] * breadth
-				wall = crawl.surfaceIndexFunction("wall", wx, wy, faceLeft)
+				wall = crawl.surfaceIndexFunction(wx, wy, faceLeft)
 				if wall > 0 then
 					wallData = crawl.wallData[depth][breadth].side
 					love.graphics.draw(wallData.images[wall], wallData.x, wallData.y)
