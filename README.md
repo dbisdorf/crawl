@@ -15,7 +15,7 @@ You also give the library a couple of callback functions that will return inform
 
 When you want to draw a view of the dungeon, you create a Canvas and pass it to the library. The library will draw a view of your dungeon onto your Canvas. You can then draw the Canvas to the screen wherever and whenver you like.
 
-## Longer example
+## Quick example
 
 The following code, if accompanied by appropriate image files, is a minimal example of how you might initialize the library and draw a simple dungeon:
 
@@ -63,7 +63,7 @@ end
 
 ```
 
-## Fuller example
+## Longer example
 
 The example game in this repository (represented by main.lua, conf.lua, and everything in the assets folder) provides a more detailed demonstration of the library. The controls appear in the lower right corner of the screen; use your mouse to click them or press the indicated keys. Use the attack (sword) action to destroy a monster; use the interact (hand) action to open or close doors or pick up loot. It's not a proper game (the objects you pick up don't do anything and there's no combat system) but it demonstrates walking, turning, indoor and outdoor environments, loot and monsters, and light dimming at a distance.
 
