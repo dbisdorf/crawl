@@ -15,7 +15,7 @@ You also give the library a couple of callback functions that will return inform
 
 When you want to draw a view of the dungeon, you create a Canvas and pass it to the library. The library will draw a view of your dungeon onto your Canvas. You can then draw the Canvas to the screen wherever and whenver you like.
 
-## Quick example
+## Longer example
 
 The following code, if accompanied by appropriate image files, is a minimal example of how you might initialize the library and draw a simple dungeon:
 
