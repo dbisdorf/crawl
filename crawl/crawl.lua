@@ -351,23 +351,26 @@ function crawl.draw(canvas, x, y, facing)
 		end
 
 		-- draw side walls
-		for breadth = -drawBreadth, drawBreadth do
-			if breadth < 0 then
-				-- left side
+		for breadth = (-drawBreadth + 1), (drawBreadth - 1) do
+			if breadth < 1 then
+				-- left side or center
 				wx = x + crawl.steps[facing][1] * depth + crawl.steps[faceLeft][1] * -breadth
 				wy = y + crawl.steps[facing][2] * depth + crawl.steps[faceLeft][2] * -breadth
-				wall = crawl.surfaceIndexFunction(wx, wy, faceRight)
+				wall = crawl.surfaceIndexFunction(wx, wy, faceLeft)
+				-- print(string.format("walls on left side depth %d breadth %d wx %d wy %d faceLeft %d", depth, breadth, wx, wy, faceLeft))
 				if wall > 0 then
-					wallData = crawl.wallData[depth][-breadth].side
+					wallData = crawl.wallData[depth][-breadth + 1].side
 					love.graphics.draw(wallData.images[wall], -wallData.x, wallData.y, 0, -1, 1)
 				end
-			elseif breadth > 0 then
-				-- right side
+			end
+			if breadth > -1 then
+				-- right side or center
 				wx = x + crawl.steps[facing][1] * depth + crawl.steps[faceRight][1] * breadth
 				wy = y + crawl.steps[facing][2] * depth + crawl.steps[faceRight][2] * breadth
-				wall = crawl.surfaceIndexFunction(wx, wy, faceLeft)
+				wall = crawl.surfaceIndexFunction(wx, wy, faceRight)
+				-- print(string.format("walls on right side depth %d breadth %d wx %d wy %d faceRight %d", depth, breadth, wx, wy, faceRight))
 				if wall > 0 then
-					wallData = crawl.wallData[depth][breadth].side
+					wallData = crawl.wallData[depth][breadth + 1].side
 					love.graphics.draw(wallData.images[wall], wallData.x, wallData.y)
 				end
 			end
