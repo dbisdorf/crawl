@@ -261,6 +261,7 @@ end
 
 function crawl.draw(canvas, x, y, facing) 
 	local filterMin, filterMag, filterAni = love.graphics.getDefaultFilter()
+	local originalCanvas = love.graphics.getCanvas()
 	local cw, ch = canvas:getDimensions()
 	local faceLeft = crawl.leftFaceFrom(facing)
 	local faceRight = crawl.rightFaceFrom(facing)
@@ -278,6 +279,7 @@ function crawl.draw(canvas, x, y, facing)
 	love.graphics.setDefaultFilter("nearest")
 	love.graphics.setCanvas(canvas)
 	love.graphics.clear()
+	love.graphics.push()
 	love.graphics.translate(cw / 2, ch / 2)
 
 	-- draw sky
@@ -379,8 +381,8 @@ function crawl.draw(canvas, x, y, facing)
 
 	end
 
-	love.graphics.setCanvas()
-	love.graphics.origin()
+	love.graphics.setCanvas(originalCanvas)
+	love.graphics.pop()
 	love.graphics.setDefaultFilter(filterMin, filterMag, filterAni)
 end
 
