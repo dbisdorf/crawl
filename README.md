@@ -92,13 +92,14 @@ The library refers to north as direction number 1, east as 2, south as 3, and we
 
 ## Library functions
 
-**crawl.init(wallTextures, ceilingTextures, floorTextures, contentsTextures, wallWidth, maxDepth, setBack, dimming, surfaceIndexFunction, contentsIndexFunction)**
+**crawl.init(wallTextures, ceilingTextures, floorTextures, contentsTextures, wallWidth, wallHeight, maxDepth, setBack, dimming, surfaceIndexFunction, contentsIndexFunction)**
 
 - **wallTextures**: an array of the filenames of the images you'll use as walls.
 - **ceilingTxtures**: an array of the filenames of the images you'll use as ceilings.
 - **floorTextures**: an array of the filenames of the images you'll use as floors.
 - **contentsTextures**: an array of the filenames of the images you'll use for dungeon contents such as monsters and loot.
 - **wallWidth**: the desired visible width, in pixels, of a wall directly in front of the player. This does not have to match the size of the images you provided as wallTextures; the library will rescale images as necessary.
+- **wallHeight**: the desired visible height, in pixels, of a wall directly in front of the player.
 - **maxDepth**: the maximum distance, measured in dungeon squares, that the library will draw.
 - **setBack**: this fine-tuning parameter represents how far back in the square the player's point of view should be. This is a floating point value between 0.1 and 1.0, where 0.1 means the point of view is close to the forward edge of the square, and 1.0 means the point of view is at the rear edge. Try using a value of 0.8 to start with, and tweak it to provide the effect you like.
 - **dimming**: this value sets the strength of an effect that causes surfaces to appear dimmer the further they are from the viewpoint. A value of 0.0 represents no dimming; 1.0 represents maximum dimming.
